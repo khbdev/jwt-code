@@ -27,6 +27,7 @@ func main(){
 
 	      http.HandleFunc("/register", auth.RegisterHandler)
     http.HandleFunc("/login", auth.LoginHandler)
+	http.HandleFunc("/refresh", auth.RefreshHandler)
 
     log.Println("Server is running at :8002")
     http.ListenAndServe(":8002", nil)
