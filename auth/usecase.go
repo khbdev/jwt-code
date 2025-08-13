@@ -12,17 +12,27 @@ var DB *sql.DB
 
 
 func Register(user User) error {
-	hashed, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	if  err != nil {
-		return  err
+	
+	if user.Role == "" {
+		user.Role = "user"
 	}
-	_, err = DB.Exec("INSERT INTO users (email, password) VALUES (?, ?)", user.Email, string(hashed))
-	return  err
+
+
+	hashed, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	_, err = DB.Exec(
+		"INSERT INTO users (email, password, role) VALUES (?, ?, ?)",
+		user.Email, string(hashed), user.Role,
+	)
+	return err
 }
 func Login(email, password string) (string, string, error) {
     var u User
-    row := DB.QueryRow("SELECT id, email, password FROM users WHERE email = ?", email)
-    err := row.Scan(&u.ID, &u.Email, &u.Password)
+    row := DB.QueryRow("SELECT id, email, password, role FROM users WHERE email = ?", email)
+    err := row.Scan(&u.ID, &u.Email, &u.Password, &u.Role)
     if err != nil {
         return "", "", errors.New("invalid credentials")
     }
@@ -41,7 +51,6 @@ func Login(email, password string) (string, string, error) {
         return "", "", err
     }
 
-    // (ixtiyoriy) DBga refresh tokenni saqlash
     _, _ = DB.Exec("UPDATE users SET refresh_token = ? WHERE id = ?", refreshToken, u.ID)
 
     return accessToken, refreshToken, nil

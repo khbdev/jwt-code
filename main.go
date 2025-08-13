@@ -2,14 +2,19 @@ package main
 
 import (
 	"database/sql"
+
 	"jwt/auth"
 	"log"
 	"net/http"
 	"os"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
-	 _ "github.com/go-sql-driver/mysql"
 )
+
+
+
+
 
 func main(){
 	if err := godotenv.Load(); err != nil {
@@ -25,9 +30,17 @@ func main(){
     }
 	  auth.DB = db
 
+	  auth.AutoMigrate(db)
+	 
+
 	      http.HandleFunc("/register", auth.RegisterHandler)
     http.HandleFunc("/login", auth.LoginHandler)
 	http.HandleFunc("/refresh", auth.RefreshHandler)
+  http.Handle("/admin",
+    auth.JWTMiddleware(           
+        auth.AdminOnly(http.HandlerFunc(auth.Salom)),
+    ),
+)
 
     log.Println("Server is running at :8002")
     http.ListenAndServe(":8002", nil)
